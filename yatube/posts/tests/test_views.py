@@ -37,8 +37,7 @@ class PostViewsTests(TestCase):
         cls.post_two = Post.objects.create(
                 group=PostViewsTests.group_two,
                 text='Тестовый текст 2',
-                author=cls.author,
-            )
+                author=cls.author,)
 
     def setUp(self):
         # Создаем неавторизованный клиент
@@ -152,8 +151,7 @@ class PostViewsTests(TestCase):
         # совпадает с ожидаемым
         list_id = Post.objects.filter(author=self.author).values_list(
             'id', flat=True)
-        url = reverse('posts:post_detail', args=[
-                                    random.choice(list_id)])
+        url = reverse('posts:post_detail', args=[random.choice(list_id)])
         response = self.authorized_client.get(url)
         post = response.context['post']
         username = post.author.username
@@ -182,8 +180,7 @@ class PostViewsTests(TestCase):
         """
         list_id = Post.objects.filter(author=self.author).values_list(
             'id', flat=True)
-        url = reverse('posts:post_edit', args=[
-                                    random.choice(list_id)])
+        url = reverse('posts:post_edit', args=[random.choice(list_id)])
         response = self.authorized_client_author.get(url)
         form_fields = {
             'group': forms.fields.ChoiceField,
