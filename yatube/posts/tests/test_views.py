@@ -35,9 +35,9 @@ class PostViewsTests(TestCase):
             )
 
         cls.post_two = Post.objects.create(
-                group=PostViewsTests.group_two,
-                text='Тестовый текст 2',
-                author=cls.author,)
+            group=PostViewsTests.group_two,
+            text='Тестовый текст 2',
+            author=cls.author,)
 
     def setUp(self):
         # Создаем неавторизованный клиент
