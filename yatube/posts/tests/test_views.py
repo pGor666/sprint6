@@ -231,10 +231,3 @@ class PostViewsTests(TestCase):
         page_obj = response.context.get('page_obj')
         post = Post.objects.all()[0]
         self.assertNotIn(post, page_obj)
-
-
-fruits = ["apple", "banana", "cherry"]
-
-x = fruits.count("cherry")
-
-print(x)
