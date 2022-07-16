@@ -112,8 +112,7 @@ class PostViewsTests(TestCase):
             reverse('posts:index') + '?page=2')
         per_page = response.context['paginator'].per_page
         self.assertEqual(
-            response.context['page_obj'].end_index() % per_page, 2
-            )
+            response.context['page_obj'].end_index() % per_page, 2)
 
     # Проверяем, что словарь context страницы /group
     # в первом элементе списка post_list содержит ожидаемые значения
