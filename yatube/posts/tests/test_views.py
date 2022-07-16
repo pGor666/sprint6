@@ -104,13 +104,16 @@ class PostViewsTests(TestCase):
     def test_first_page_contains_ten_records(self):
         response = self.authorized_client.get(reverse('posts:index'))
         # Проверка: количество постов на первой странице равно 10.
-        self.assertEqual(response.context['page_obj'].count, 10)
+        self.assertEqual(response.context['page_obj'].end_index(), 10)
 
     def test_second_page_contains_two_records(self):
         # Проверка: на второй странице должно быть два поста.
         response = self.authorized_client.get(
             reverse('posts:index') + '?page=2')
-        self.assertEqual(response.context['page_obj'].count, 2)
+        per_page = response.context['paginator'].per_page
+        self.assertEqual(
+            response.context['page_obj'].end_index() % per_page, 2
+            )
 
     # Проверяем, что словарь context страницы /group
     # в первом элементе списка post_list содержит ожидаемые значения
@@ -228,3 +231,10 @@ class PostViewsTests(TestCase):
         page_obj = response.context.get('page_obj')
         post = Post.objects.all()[0]
         self.assertNotIn(post, page_obj)
+
+
+fruits = ["apple", "banana", "cherry"]
+
+x = fruits.count("cherry")
+
+print(x)
