@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase, Client
 
@@ -66,7 +68,7 @@ class PostURLTests(TestCase):
         for address in templates_url_names:
             with self.subTest(address=address):
                 response = self.guest_client.get(address)
-                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.status_code, HTTPStatus.OK)
 
     # Проверяем доступность страниц для авторизованного пользователя
     def test_authorized_url_exists_at_desired_location(self):
@@ -81,7 +83,7 @@ class PostURLTests(TestCase):
         for address in templates_url_names:
             with self.subTest(address=address):
                 response = self.authorized_client.get(address)
-                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.status_code, HTTPStatus.OK)
 
     # Проверяем доступность страниц для автора поста
     def test_author_url_exists_at_desired_location(self):
@@ -92,7 +94,7 @@ class PostURLTests(TestCase):
         for address in templates_url_names:
             with self.subTest(address=address):
                 response = self.authorized_client_author.get(address)
-                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.status_code, HTTPStatus.OK)
 
     # Проверяем редиректы для неавторизованного пользователя
     def test_url_redirect_anonymous(self):
@@ -101,7 +103,7 @@ class PostURLTests(TestCase):
         """
         response = self.guest_client.get(
             f'/posts/{PostURLTests.post.id}/edit/')
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
         self.assertRedirects(
             response, f'/auth/login/?next=/posts/{PostURLTests.post.id}/edit/')
 
@@ -112,6 +114,6 @@ class PostURLTests(TestCase):
         """
         response = self.authorized_client.get(
             f'/posts/{PostURLTests.post.id}/edit/')
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
         self.assertRedirects(
             response, f'/posts/{PostURLTests.post.id}/')

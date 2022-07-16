@@ -1,8 +1,9 @@
+import random
+
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
 from django import forms
-import random
 
 from ..models import Post, Group
 
@@ -103,13 +104,13 @@ class PostViewsTests(TestCase):
     def test_first_page_contains_ten_records(self):
         response = self.authorized_client.get(reverse('posts:index'))
         # Проверка: количество постов на первой странице равно 10.
-        self.assertEqual(len(response.context.get('page_obj')), 10)
+        self.assertEqual(response.context['page_obj'].count, 10)
 
     def test_second_page_contains_two_records(self):
         # Проверка: на второй странице должно быть два поста.
         response = self.authorized_client.get(
             reverse('posts:index') + '?page=2')
-        self.assertEqual(len(response.context.get('page_obj')), 2)
+        self.assertEqual(response.context['page_obj'].count, 2)
 
     # Проверяем, что словарь context страницы /group
     # в первом элементе списка post_list содержит ожидаемые значения

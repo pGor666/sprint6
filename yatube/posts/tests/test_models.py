@@ -26,11 +26,9 @@ class PostModelTest(TestCase):
         post = PostModelTest.post
         expected_object_name = post.text[:15]
         self.assertEqual(expected_object_name, str(post))
-        # print(expected_object_name)
 
     def test_group_model_have_correct_object_names(self):
         """Проверяем, что у модели group корректно работает __str__."""
         group = PostModelTest.group
         expected_object_name = group.title
         self.assertEqual(expected_object_name, str(group))
-        # print(expected_object_name)
