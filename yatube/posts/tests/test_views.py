@@ -1,11 +1,12 @@
 import random
 
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.urls import reverse
 from django import forms
 
-from ..models import Post, Group
+from ..models import Post, Group, Comment
 
 User = get_user_model()
 
@@ -28,17 +29,37 @@ class PostViewsTests(TestCase):
             slug='test-slug2',
             description='Тестовое описание 2',
         )
+        small_gif = (
+            b'\x47\x49\x46\x38\x39\x61\x02\x00'
+            b'\x01\x00\x80\x00\x00\x00\x00\x00'
+            b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
+            b'\x00\x00\x00\x2C\x00\x00\x00\x00'
+            b'\x02\x00\x01\x00\x00\x02\x02\x0C'
+            b'\x0A\x00\x3B'
+        )
+        uploaded = SimpleUploadedFile(
+            name='small.gif',
+            content=small_gif,
+            content_type='image/gif'
+        )
         for i in range(1, 12):
             cls.post = Post.objects.create(
                 group=PostViewsTests.group,
                 text='Тестовый текст',
                 author=cls.author,
+                image=uploaded,
             )
 
         cls.post_two = Post.objects.create(
             group=PostViewsTests.group_two,
             text='Тестовый текст 2',
             author=cls.author,)
+
+        cls.comment = Comment.objects.create(
+            post=cls.post,
+            text='Комментарий',
+            author=cls.user
+        )
 
     def setUp(self):
         # Создаем неавторизованный клиент
@@ -96,9 +117,11 @@ class PostViewsTests(TestCase):
         post_text_0 = first_object.text
         post_group_0 = first_object.group.title
         post_author_0 = first_object.author.username
+        post_image_0 = first_object.image
         self.assertEqual(post_text_0, 'Тестовый текст')
         self.assertEqual(post_group_0, 'Тестовая группа')
         self.assertEqual(post_author_0, 'auth')
+        self.assertNotEqual(post_image_0, None)
 
     # Тестируем паджинатор
     def test_first_page_contains_ten_records(self):
@@ -126,9 +149,11 @@ class PostViewsTests(TestCase):
         post_text_0 = first_object.text
         post_group_0 = first_object.group.title
         post_author_0 = first_object.author.username
+        post_image_0 = first_object.image
         self.assertEqual(post_text_0, 'Тестовый текст')
         self.assertEqual(post_group_0, 'Тестовая группа')
         self.assertEqual(post_author_0, 'auth')
+        self.assertNotEqual(post_image_0, None)
 
     # Проверяем, что словарь context страницы /profile
     # в первом элементе списка post_list содержит ожидаемые значения
@@ -142,9 +167,11 @@ class PostViewsTests(TestCase):
         post_text_0 = first_object.text
         post_group_0 = first_object.group.title
         post_author_0 = first_object.author.username
+        post_image_0 = first_object.image
         self.assertEqual(post_text_0, 'Тестовый текст')
         self.assertEqual(post_group_0, 'Тестовая группа')
         self.assertEqual(post_author_0, 'auth')
+        self.assertNotEqual(post_image_0, None)
 
     # Проверяем, что словарь context страницы /post_detail
     # содержит ожидаемые значения
@@ -159,8 +186,10 @@ class PostViewsTests(TestCase):
         post = response.context['post']
         username = post.author.username
         text = post.text
+        post_image_0 = post.image
         self.assertEqual(text, 'Тестовый текст')
         self.assertEqual(username, 'auth')
+        self.assertNotEqual(post_image_0, None)
 
     # Проверяем поля формы создания поста
     def test_post_create_page_form(self):
@@ -169,6 +198,7 @@ class PostViewsTests(TestCase):
         form_fields = {
             'group': forms.fields.ChoiceField,
             'text': forms.fields.CharField,
+            'image': forms.fields.ImageField,
         }
 
         for value, expected in form_fields.items():
@@ -188,6 +218,7 @@ class PostViewsTests(TestCase):
         form_fields = {
             'group': forms.fields.ChoiceField,
             'text': forms.fields.CharField,
+            'image': forms.fields.ImageField,
         }
 
         for value, expected in form_fields.items():
@@ -230,3 +261,25 @@ class PostViewsTests(TestCase):
         page_obj = response.context.get('page_obj')
         post = Post.objects.all()[0]
         self.assertNotIn(post, page_obj)
+
+    def test_add_comment_view(self):
+        '''комментировать посты может только авторизованный пользователь'''
+        url = reverse(
+            "posts:add_comment", kwargs={"post_id": 1}
+        )
+        count_comments = Comment.objects.filter(post__pk=1).count()
+        data = {"text": "Test comment"}
+        response = self.authorized_client.post(
+            url, data, follow=True
+        )
+        response_guest = self.guest_client.post(
+            url, data, follow=True
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertRedirects(
+            response_guest,
+            '/auth/login/?next=' + url,
+        )
+        self.assertEqual(
+            Comment.objects.filter(post__pk=1).count(), count_comments + 1
+        )
