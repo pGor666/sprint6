@@ -7,7 +7,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 from django import forms
 
-from ..models import Post, Group, Comment
+from ..models import Post, Group, Comment, Follow
 
 User = get_user_model()
 
@@ -298,4 +298,53 @@ class PostViewsTests(TestCase):
         response = self.authorized_client.get(reverse('posts:index'))
         content_response_after = response.content
         self.assertNotEqual(content_response_before,
-                            content_response_after)                        
+                            content_response_after)   
+
+    def test_login_user_follow(self):
+        """
+        Авторизованный пользователь может подписываться
+        на других пользователей
+        """
+        followers_before = len(
+            Follow.objects.all().filter(author_id=self.author.id))
+
+        self.authorized_client.get(
+            reverse('posts:profile_follow', args=[self.author]))
+        followers_after = len(
+            Follow.objects.all().filter(author_id=self.author.id))
+        self.assertEqual(followers_after, followers_before + 1)
+
+    def test_login_user_unfollow(self):
+        """
+        Авторизованный пользователь может подписываться
+        на других пользователей, а также отписываться
+        """
+        followers_before = len(
+            Follow.objects.all().filter(author_id=self.author.id))
+
+        self.authorized_client.get(
+            reverse('posts:profile_follow', args=[self.author]))
+        self.authorized_client.get(
+            reverse('posts:profile_unfollow', args=[self.author]))
+
+        followers_after_unfollow = len(
+            Follow.objects.all().filter(author_id=self.author.id))
+        self.assertEqual(followers_after_unfollow, followers_before)
+
+    def test_follow_index(self):
+        """
+        Новая запись пользователя появляется в ленте тех,
+        кто на него подписан и не появляется в ленте тех,
+        кто не подписан на него
+        """
+        response = self.authorized_client.get(reverse('posts:follow_index'))
+
+        self.authorized_client.get(
+            reverse('posts:profile_follow', args=[self.author]))
+
+        response_after_follow = self.authorized_client.get(
+            reverse('posts:follow_index'))
+
+        self.assertEqual(response.content, response_after_follow.content)                
+
+   
