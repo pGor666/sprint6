@@ -2,6 +2,7 @@ import random
 
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.cache import cache
 from django.test import Client, TestCase
 from django.urls import reverse
 from django import forms
@@ -283,3 +284,18 @@ class PostViewsTests(TestCase):
         self.assertEqual(
             Comment.objects.filter(post__pk=1).count(), count_comments + 1
         )
+
+    def test_cache_is_working_on_index_page(self):
+        """Кэш постов на инекс пейдж хранится 20 секунд"""
+        response = self.guest_client.get(reverse("posts:index"))
+        content_response_before = response.content
+        Post.objects.create(
+            group=PostViewsTests.group,
+            text='Новый текст, после кэша',
+            author=PostViewsTests.author
+        )
+        cache.clear()
+        response = self.authorized_client.get(reverse('posts:index'))
+        content_response_after = response.content
+        self.assertNotEqual(content_response_before,
+                            content_response_after)                        
